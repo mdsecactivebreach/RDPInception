@@ -22,7 +22,7 @@ sub rdpincept {
 			$buffer = $buffer . "If \"" . $domain . "\"==\"%USERDOMAIN%\" (";
 		}
 		
-        $buffer = $buffer . "echo Updating Windows ...";
+        $buffer = $buffer . "echo Updating Windows ...\r\n";
 
 		$buffer = $buffer . "timeout 1 >nul 2>&1\r\n";
 
