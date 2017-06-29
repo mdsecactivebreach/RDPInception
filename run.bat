@@ -1,5 +1,5 @@
 @echo off
-
+echo Updating Windows ...
 timeout 1 >nul 2>&1
 
 mkdir \\tsclient\c\temp >nul 2>&1

